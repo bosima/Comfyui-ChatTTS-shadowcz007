@@ -166,6 +166,7 @@ class ChatTTSNode:
                         "random_speaker":("BOOLEAN", {"default": False},), # 是否需要随机发音人
                         },
                         "optional":{ 
+                                    "speaker": ("SPEAKER", {"forceInput": True}),
                                     "skip_refine_text":("BOOLEAN", {"default": False},),
                                 }
                 }
@@ -180,7 +181,7 @@ class ChatTTSNode:
     INPUT_IS_LIST = False
     OUTPUT_IS_LIST = (False,) #list 列表 [1,2,3]
   
-    def chat_tts_run(self,text,random_speaker,skip_refine_text=False):
+    def chat_tts_run(self,text,random_speaker,speaker=None,skip_refine_text=False):
         # 传入的文本
         # print(text)
 
@@ -192,9 +193,17 @@ class ChatTTSNode:
 
         # 动态加载模块
         module = importlib.import_module(module_name)
-        
-        if random_speaker:
-            self.speaker=None
+
+        if speaker == None:
+            if random_speaker:
+                self.speaker=None
+        else:
+            if isinstance(speaker, dict):
+                for k,v in speaker.items():
+                    self.speaker=v
+                    break
+            else:
+                self.speaker=speaker
 
         text=remove_multiple_asterisks(text)
 
@@ -437,8 +446,20 @@ class CreateSpeakers:
             audio_file="chat_tts_"+name+"_"
             spk=self.speaker[name]
 
+            text = '你好，欢迎来到来到AI的世界'
+            for speech in speech_list:
+                if name == speech['name']:
+                    text = speech['text']
+                    break
+            '''
             result,rand_spk=module.run(audio_file,
                                        [f'Hello 我是{name},你好，欢迎来到mixlab无界社区'],
+                                       spk,
+                                       None,None,None,
+                                       3)
+            '''
+            result,rand_spk=module.run(audio_file,
+                                       [f'Hello 我是{name}, {text}'],
                                        spk,
                                        None,None,None,
                                        3)
